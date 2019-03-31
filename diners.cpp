@@ -7,59 +7,58 @@ pthread_mutex_t mid;
 class semaphore {
    int counter;
 public:
-   semaphore(int num){
-   	  counter = num;
-   }
-   semaphore() {
-   	  counter =  1;
+   semaphore(){
+   	  counter = 1;
    }
    void wait(){
-       pthread_mutex_lock(&mid);         //lock the mutex here
+       pthread_mutex_lock(&mid);        
        while(1){
-           if(counter>0){                //check for counter value
-               counter--;                //decrement counter
-               break;                    //break the loop
+           if(counter>0){             
+               counter--;              
+               break;                   
            }
 
        }
-       pthread_mutex_unlock(&mid);       //unlock mutex here
+       pthread_mutex_unlock(&mid);      
    }
    void signal(){
-       pthread_mutex_lock(&mid);        //lock the mutex here
-           counter++;                   //increment counter
-           pthread_mutex_unlock(&mid);  //unlock mutex here
+       pthread_mutex_lock(&mid);     
+           counter++;                
+           pthread_mutex_unlock(&mid); 
        }
 
 };
-semaphore chopsticks[5], initialize(1), printLock(1);
-int oddphil = 1, evenphil = 0;
+semaphore chopsticks[5], lock;
+int phil = 0;
 
-void* odd_philosopher(void *arg) {
+void* philosopher(void *arg) {
     int num;
-    initialize.wait();
-    num = oddphil;
-    oddphil += 2;	
-    initialize.signal();
+    lock.wait();
+    num = phil;	
+    phil++;
+    lock.signal();
     
     while(true) {
-    	
-    	printLock.wait();
-		cout<<"Philosopher "<<num<<" thinking"<<endl;
-		printLock.signal();
-		sleep(1);
+		sleep(2);
 		
-		printLock.wait();
-		cout<<"Philosopher "<<num<<" wants to eat"<<endl;
-		printLock.signal();
-		sleep(1);
+		cout<<num<<" thinking"<<endl;
 		
-		chopsticks[(num + 1)%5].wait();
-		chopsticks[num%5].wait();
+		sleep(2);
 		
-		printLock.wait();
-		cout<<"Philosopher "<<num<<" eating"<<endl;
-		printLock.signal();
-		sleep(1);
+		cout<<num<<" hungry"<<endl;
+		
+		//We will asymmetrically request the chopsticks for even or odd numbered philosophers
+		
+		if(num % 2 == 0) {
+			chopsticks[(num + 1)%5].wait();
+			chopsticks[num%5].wait();
+		}
+		else {
+			chopsticks[num%5].wait();
+			chopsticks[(num + 1)%5].wait();
+		}
+		
+		cout<<"num"<<" eating"<<endl;
 		
 		chopsticks[num%5].signal();
 		chopsticks[(num+1) % 5].signal();
@@ -68,51 +67,16 @@ void* odd_philosopher(void *arg) {
 	
 }
 
-void* even_philosopher(void *arg) {
-	int num;
-	initialize.wait();
-	num = evenphil;
-	evenphil += 2;
-	initialize.signal();
-	
-	while(true) {
-		
-		printLock.wait();
-		cout<<"Philosopher "<<num<<" thinking"<<endl;
-		printLock.signal();
-		sleep(1);
-		
-		printLock.wait();
-		cout<<"Philosopher "<<num<<" wants to eat"<<endl;
-		printLock.signal();
-		sleep(1);
-		
-		chopsticks[num%5].wait();
-		chopsticks[(num+1)%5].wait();
-		
-		printLock.wait();
-		cout<<"Philosopher "<<num<<" eating"<<endl;
-		printLock.signal();
-		sleep(1);
-		
-		chopsticks[(num + 1)%5].signal();
-		chopsticks[num % 5].signal();
-		
-	}
-
-}
-
 
 int main() {
    
    pthread_t id[5]; //5 philosophers
-   for(int i=0; i<3; i++) {
-	pthread_create(&id[i], NULL, even_philosopher, NULL);
-   }
-   for(int i=3; i<5; i++) {
-   	pthread_create(&id[i], NULL, odd_philosopher, NULL);
-   }
+   pthread_create(&id[1], NULL, philosopher, NULL);
+   pthread_create(&id[2], NULL, philosopher, NULL);
+   pthread_create(&id[3], NULL, philosopher, NULL);  
+   pthread_create(&id[4], NULL, philosopher, NULL);
+   pthread_create(&id[0], NULL, philosopher, NULL);
    for(int i=0;i<5;i++)
-   pthread_join(id[i],NULL); 
+   pthread_join(id[i],NULL);
 
 }
