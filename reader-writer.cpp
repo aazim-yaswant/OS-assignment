@@ -37,7 +37,7 @@ int num_read, num_write;
 string text = "Considering this as the critical section";
 int length; 
 
-semaphore readMutex(1), writeMutex(1), readTry(1), resource(1), printLock(1);
+semaphore readMutex(1), writeMutex(1), readTry(1), resource(1);
 
 void* Reader(void *arg) {
 	while(true) {
@@ -53,15 +53,11 @@ void* Reader(void *arg) {
 		readMutex.signal();
 		readTry.signal();
 		
-		printLock.wait(); //lock for printing multiple lines together
 		cout<<"Read the text: "<<text<<"\n";
-		printLock.signal();
 		
 		length = text.length();
-		
-		printLock.wait();
+
 		cout<<"Length of the text: "<<length<<"\n";
-		printLock.signal();
 		
 		readMutex.wait();
 		
